@@ -20,12 +20,15 @@ public class ConsumerDemo3 {
         props.load(ConsumerDemo3.class.getClassLoader().getResourceAsStream("consumer.properties"));
         props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "d30-2");
-        props.setProperty(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, StickyAssignor.class.getName());
+        // 做实验的时候注意: 多个消费者，要加入同一组的话，这些消费者自身的再均衡分配策略必须都一致
+        //props.setProperty(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG, StickyAssignor.class.getName());
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
         // 订阅主题
         // reb-1 主题：3个分区
         // reb-2 主题：2个分区
+        // 只要启动消费者进程，就会执行分区再均衡，因为当前消费者这里有对再均衡机制的回调函数，因此回调函数会执行
+        // 启动消费者进程时，只会执行onPartitionsAssigned()，且回调函数中的TopicPartition都是当前消费者负责的，
         consumer.subscribe(Arrays.asList("reb-1", "reb-2"), new ConsumerRebalanceListener() {
             // 再均衡过程中，消费者会被取消先前所分配的主题、分区
             // 取消之后，consumer底层会调用如下方法
