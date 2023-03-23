@@ -10,6 +10,7 @@
     <version>1.0</version>
     <modules>
         <module>kafka_course</module>
+        <module>flink_course</module>
     </modules>
 
     <properties>
@@ -17,6 +18,15 @@
         <maven.compiler.target>8</maven.compiler.target>
         <kafka.vsersion>2.4.1</kafka.vsersion>
     </properties>
+
+    <!--放在dependencyManagement外部的依赖，直接被子工程继承，不用在子工程中再写了-->
+    <dependencies>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.79</version>
+        </dependency>
+    </dependencies>
 
     <dependencyManagement>
         <dependencies>
@@ -30,12 +40,6 @@
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>1.18.2</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>fastjson</artifactId>
-                <version>1.2.79</version>
             </dependency>
 
             <dependency>
