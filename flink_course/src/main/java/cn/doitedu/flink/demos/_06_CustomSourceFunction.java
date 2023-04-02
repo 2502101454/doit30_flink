@@ -58,7 +58,7 @@ class MySourceFunction implements SourceFunction<EventLog> {
             ctx.collect(eventLog);
             eventInfo.clear();
 
-            Thread.sleep(RandomUtils.nextInt(500, 1500));
+            Thread.sleep(RandomUtils.nextInt(50, 150));
         }
     }
 
