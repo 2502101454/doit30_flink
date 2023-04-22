@@ -48,7 +48,7 @@ class MySourceFunction implements SourceFunction<EventLog> {
 
         while (flag) {
             eventLog.setGuid(RandomUtils.nextLong(1, 1000));
-            eventLog.setSessionId(RandomStringUtils.randomAlphabetic(12).toUpperCase());
+            eventLog.setSessionId(RandomStringUtils.randomAlphabetic(1024).toUpperCase());
             eventLog.setTimestamp(System.currentTimeMillis());
             eventLog.setEventId(events[RandomUtils.nextInt(0, events.length)]);
 
@@ -58,7 +58,8 @@ class MySourceFunction implements SourceFunction<EventLog> {
             ctx.collect(eventLog);
             eventInfo.clear();
 
-            Thread.sleep(RandomUtils.nextInt(50, 150));
+//            Thread.sleep(RandomUtils.nextInt(50, 150));
+            Thread.sleep(1);
         }
     }
 
@@ -69,19 +70,7 @@ class MySourceFunction implements SourceFunction<EventLog> {
     }
 }
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-@ToString
-class EventLog {
-    private long guid;
-    private String sessionId;
-    private String eventId;
-    private long timestamp;
-    private Map<String, String> eventInfo;
 
-}
 
 class MyRichSourceFunction extends RichSourceFunction<EventLog> {
 
