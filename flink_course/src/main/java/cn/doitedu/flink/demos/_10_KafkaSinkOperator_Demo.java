@@ -16,14 +16,14 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * @desc:
  */
 public class _10_KafkaSinkOperator_Demo {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Configuration configuration = new Configuration();
         configuration.setInteger("rest.port", 8822);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(configuration);
 
         // 开启Checkpoint
         env.enableCheckpointing(5000, CheckpointingMode.EXACTLY_ONCE);
-        env.getCheckpointConfig().setCheckpointStorage("");
+        env.getCheckpointConfig().setCheckpointStorage("file:///D:/learn_output/ckpt/");
 
         DataStreamSource<EventLog> streamSource = env.addSource(new MySourceFunction());
 
@@ -36,11 +36,12 @@ public class _10_KafkaSinkOperator_Demo {
                         .build()
                 )
                 .setDeliverGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
-                .setTransactionalIdPrefix("doitedu-")
+                .setTransactionalIdPrefix("doitedu-") // 设置事务号前缀，api会自己再补一些后缀
                 .build();
 
         streamSource.map(JSON::toJSONString)
                 .sinkTo(kafkaSink);
 
+        env.execute();
     }
 }
