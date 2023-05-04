@@ -51,7 +51,7 @@ public class _12_RedisSinkOperator_Demo {
         // eventLog数据插入redis
         FlinkJedisPoolConfig config = new FlinkJedisPoolConfig.Builder().setHost("localhost").build();
         // 构建redisSink算子
-        RedisSink<EventLog> redisSink = new RedisSink<>(config, new StringInsertMapper());
+        RedisSink<EventLog> redisSink = new RedisSink<>(config, new HashInsertMapper());
         streamSource.addSink(redisSink);
 
         env.execute();
@@ -92,6 +92,23 @@ public class _12_RedisSinkOperator_Demo {
      * Hash类型写入
      */
     static class HashInsertMapper implements RedisMapper<EventLog> {
+        /**
+         * 对于内部有小key的结构，比如hash，RedisCommandDescription 中写死了大key，
+         * 如果需要对每一条数据，自己做一个大key，则重写这里的方法，这里的key优先级比RedisCommandDescription 中的高
+         * @param data
+         * @return
+         */
+        @Override
+        public Optional<String> getAdditionalKey(EventLog data) {
+            return Optional.of(data.getSessionId());
+//            return RedisMapper.super.getAdditionalKey(data);
+        }
+
+        // 根据具体时间，设置不同的ttl(time to live 存活时长)
+        @Override
+        public Optional<Integer> getAdditionalTTL(EventLog data) {
+            return RedisMapper.super.getAdditionalTTL(data);
+        }
 
         @Override
         public RedisCommandDescription getCommandDescription() {
@@ -99,8 +116,8 @@ public class _12_RedisSinkOperator_Demo {
         }
 
         /**
-         * 1.对于有内部 小key的数据结构，比如hash，则大key由上面RedisCommandDescription中的additionalKey指定
-         *      小key又此处指定
+         * 1.对于有内部 小key的数据结构，比如hash，则大key由上面RedisCommandDescription or getAdditionalKey指定
+         *      小key在此处指定
          *
          * 2.对于内部 没有小key的，比如list、set，则大key由此处指定，上面指定也无效
          * @param eventLog
