@@ -104,7 +104,7 @@ public class _08_SinkOperator_Demos {
 
         */
 
-        // 方式2.3 最简单常用
+        // 方式2.3 最简单常用 (在Exercise_1中，发现 不允许写入的bean 字段有null值)
         ParquetWriterFactory<EventLog> writerFactory2 = ParquetAvroWriters.forReflectRecord(EventLog.class);
         FileSink<EventLog> parquetSink2 = FileSink.forBulkFormat(new Path("/Users/zeng.wang/Downloads/file_sink2"), writerFactory2)
                 .withRollingPolicy(OnCheckpointRollingPolicy.build())
