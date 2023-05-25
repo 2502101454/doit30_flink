@@ -5,13 +5,18 @@ import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
@@ -19,6 +24,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * @author zengwang
@@ -46,7 +52,7 @@ public class _20_Window_Api_Demo1 {
         // env.setRuntimeMode(RuntimeExecutionMode.STREAMING);
 
         // env.getConfig().setAutoWatermarkInterval(10000);
-        // guid, event, pageId, actTimeLong
+        // guid, eventId,timestamp, pageId, actTimeLong
         // 1,e01,10000,page01,10
         DataStreamSource<String> s1 = env.socketTextStream("localhost", 9999);
         SingleOutputStreamOperator<EventBean2> beanStream = s1.map(s -> {
@@ -70,8 +76,7 @@ public class _20_Window_Api_Demo1 {
                 // window(窗口长度，滑动步长)
                 .window(SlidingEventTimeWindows.of(Time.seconds(30), Time.seconds(10)));
         // window算子 对每个key的stream进行开窗，得到一个开窗了的Stream
-        /**
-         * 滚动聚合 API 使用示例
+        /**滚动聚合api使用示例:
          * 需求 一： 每隔10s，统计最近30s数据中，每个用户的行为条数
          * 使用aggregate算子实现：
          *  算子内部维护一个状态变量——累加器，里面存储我们需要的信息
@@ -133,7 +138,7 @@ public class _20_Window_Api_Demo1 {
                 });
         // resultStream.print(">");
 
-        /**
+        /**滚动聚合api使用示例:
          * 需求二：每10s，统计最近30s数据中，每个用户的平均行为时长
          * 注意：使用滚动聚合，累加器定义, Tuple2<行为次数, 行为总时长>
          */
@@ -160,6 +165,131 @@ public class _20_Window_Api_Demo1 {
             }
         });
         // resultStream2.print()
+
+        /**滚动聚合api使用示例:
+         * TODO 补充练习 1
+         * 需求 一 ：  每隔10s，统计最近 30s 的数据中，每个用户的行为事件条数
+         * 使用sum算子来实现
+         * 有意思：bean又被套了一层tuple2，window是如何找到bean的timestamp，从而分配到对应的bucket内？
+         */
+        watermarkedBeanStream.map(bean -> Tuple2.of(bean, 1)).returns(new TypeHint<Tuple2<EventBean2, Integer>>() {})
+                .keyBy(tuple2 -> tuple2.f0.getGuid())
+                .window(SlidingEventTimeWindows.of(Time.seconds(30), Time.seconds(10)))
+                .sum("f1");
+                // .print();
+
+        /**滚动聚合api使用示例:
+         * TODO 补充练习 2
+         * 需求 一：  每隔10s，统计最近 30s 的数据中，每个用户的最大行为时长，整条记录
+         * 用max算子来实现(返回 <<首条数据 apply 局部字段的更新>>)
+         * 需求二：每隔10s，统计最近 30s 的数据中，每个用户的最大行为时长以及所在的那条行为记录
+         * 用maxBy算子 返回最大的那条数据
+         */
+        // SingleOutputStreamOperator<EventBean2> actLongTime = windowedStream.max("actTimeLong");
+        // actLongTime.print();
+        // SingleOutputStreamOperator<EventBean2> actLongTime2 = windowedStream.maxBy("actTimeLong");
+        // actLongTime2.print();
+
+        /**全量聚合API 使用实例:
+         * TODO 补充练习 3
+         * 需求二: 每隔10s，统计最近 30s 的数据中，每个用户的行为事件中，行为时长最长的前2条记录
+         * 用 apply 算子实现
+         */
+        // WindowFunction<输入，输出，key，窗口>
+        windowedStream.apply(new WindowFunction<EventBean2, EventBean2, Long, TimeWindow>() {
+            @Override
+            public void apply(Long key, TimeWindow window, Iterable<EventBean2> input, Collector<EventBean2> out) throws Exception {
+                // 获取window的元信息
+                long maxTimestamp = window.maxTimestamp();
+                long start = window.getStart();
+                long end = window.getEnd();
+                // 每个Key是一个独立维护的窗口，因此2个key的话，这里就执行两次
+                // 窗口是在自己的maxTimestamp的时候触发计算的，和endTime无关，比如滑动窗口，每10s，计算最近30s的数据，
+                // 有窗口[-10000, 20000)ms 窗口的maxTimestamp是19999, end 是2000, 当算子的wm是19999的时候就会触发窗口计算
+
+                System.out.println(MessageFormat.format("--apply window: maxTimestamp {0} start {1} end {2}",
+                        maxTimestamp, start, end));
+                // --apply window: maxTimestamp 19,999 start -10,000 end 20,000
+
+                ArrayList<EventBean2> beans = new ArrayList<>();
+                for (EventBean2 ele : input) {
+                    beans.add(ele);
+                }
+                // low B 写法，可以使用treeMap进行优化
+                Collections.sort(beans, new Comparator<EventBean2>() {
+                    @Override
+                    public int compare(EventBean2 o1, EventBean2 o2) {
+                        // 参数顺序 和 使用参数的顺序 不一致，表示逆序
+                        return o2.getActTimeLong() - o1.getActTimeLong();
+                    }
+                });
+
+                // 输出前2个，兼容event id只有一种的情况
+                for (int i = 0; i < Math.min(beans.size(), 2); i++) {
+                    out.collect(beans.get(i));
+                }
+            }
+        }).print();
+
+        /**全量聚合API 使用实例:
+         * TODO 补充练习 4
+         * 需求 一： 每隔10s，统计最近30s 的数据中，每个页面上发生的行为中，平均时长最大的前2种事件及其平均时长
+         * 用 process算子来实现，可以得到更多信息，比如上下文
+         */
+        watermarkedBeanStream.keyBy(EventBean2::getPageId)
+                .window(SlidingEventTimeWindows.of(Time.seconds(30), Time.seconds(10)))
+                // ProcessWindowFunction<输入的类型，输出的类型Tuple3<pageId, eventId, 时长>，key的类型，timeWindow>
+                .process(new ProcessWindowFunction<EventBean2, Tuple3<String, String, Double>, String, TimeWindow>() {
+                    @Override
+                    public void process(String key,
+                                        ProcessWindowFunction<EventBean2, Tuple3<String, String, Double>, String, TimeWindow>.Context context,
+                                        Iterable<EventBean2> elements,
+                                        Collector<Tuple3<String, String, Double>> out) throws Exception {
+                        String taskName = getRuntimeContext().getTaskName();
+                        // 从上下文获取更多信息
+                        long currentWatermark = context.currentWatermark();
+                        TimeWindow window = context.window();
+                        // 获取window的元信息
+                        long maxTimestamp = window.maxTimestamp();
+                        long start = window.getStart();
+                        long end = window.getEnd();
+
+                        // HashMap<事件id, Tuple2<该事件次数, 该事件的所有时长>>
+                        HashMap<String, Tuple2<Integer, Long>> map = new HashMap<>();
+                        // 求每种事件 的平均时长
+                        for (EventBean2 element : elements) {
+                            String eventId = element.getEventId();
+                            Tuple2<Integer, Long> countAndTimeLong = map.getOrDefault(eventId, Tuple2.of(0, 0L));
+                            countAndTimeLong.setFields(countAndTimeLong.f0 + 1, countAndTimeLong.f1 + element.getActTimeLong());
+                            map.put(eventId, countAndTimeLong);
+                        }
+
+                        ArrayList<Tuple2<String, Double>> tmpList = new ArrayList<>();
+                        for (Map.Entry<String, Tuple2<Integer, Long>> entry : map.entrySet()) {
+                            Tuple2<Integer, Long> countAndTimeLong = entry.getValue();
+                            tmpList.add(Tuple2.of(entry.getKey(), (double) countAndTimeLong.f1 / countAndTimeLong.f0));
+                        }
+                        // 通过排序求top2
+                        Collections.sort(tmpList, new Comparator<Tuple2<String, Double>>() {
+                            @Override
+                            public int compare(Tuple2<String, Double> o1, Tuple2<String, Double> o2) {
+                                /**根据参数顺序和使用比较句柄的顺序是否一致，来理解排序顺序
+                                 * 1.正序：o1, o2；o1.compareTo(o2)， 顺序一致
+                                 * 2.逆序: o1, o2；o2.compareTo(o1), 顺序相反
+                                 */
+                                // return o1.f1.compareTo(o2.f1);
+                                return Double.compare(o2.f1, o1.f1);
+                            }
+                        });
+
+                        // 输出前2个，兼容event id只有一种的情况
+                        for (int i = 0; i < Math.min(tmpList.size(), 2); i++) {
+                            out.collect(Tuple3.of(key, tmpList.get(i).f0, tmpList.get(i).f1));
+                        }
+                    }
+                });//.print();
+
+
 
         // 什么时候触发窗口? [0, 10s) [0, 9999]ms 都是窗口要的，窗口在9999也不能触发，是窗口范围的闭区间呀，必须等到10000ms?
 

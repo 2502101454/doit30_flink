@@ -105,8 +105,7 @@ public class _07_Transformation_Demos {
                         .returns(new TypeHint<Tuple4<Integer, String, String, Integer>>() {});
 
         tuple4.keyBy(tp -> tp.f1)
-                .minBy("f3");
-                // .print();
+                .max("f3").print();
 
         /**
          * reduce 算子演示：实现各个性别，求好友数最大，且当前后两条数据的好友数一样时，输出后来的这条数据
@@ -137,7 +136,7 @@ public class _07_Transformation_Demos {
 
                 return value2;
             }
-        }).print();
+        });//.print();
         // min 和minBy 同理
         env.execute();
 
