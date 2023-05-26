@@ -169,14 +169,15 @@ public class _20_Window_Api_Demo1 {
         /**滚动聚合api使用示例:
          * TODO 补充练习 1
          * 需求 一 ：  每隔10s，统计最近 30s 的数据中，每个用户的行为事件条数
-         * 使用sum算子来实现
+         * 使用sum算子来实现, sum输出也是整条数据，同理于max，首条数据(其他字段 + sum字段被修改)
          * 有意思：bean又被套了一层tuple2，window是如何找到bean的timestamp，从而分配到对应的bucket内？
+         * 自动拆包? 还是从上游来的bean 都是带上一个flag，bean转换的新数据也会继承flag?
          */
         watermarkedBeanStream.map(bean -> Tuple2.of(bean, 1)).returns(new TypeHint<Tuple2<EventBean2, Integer>>() {})
                 .keyBy(tuple2 -> tuple2.f0.getGuid())
                 .window(SlidingEventTimeWindows.of(Time.seconds(30), Time.seconds(10)))
-                .sum("f1");
-                // .print();
+                .sum("f1")
+                .print("sum tuple--->");
 
         /**滚动聚合api使用示例:
          * TODO 补充练习 2
@@ -207,8 +208,8 @@ public class _20_Window_Api_Demo1 {
                 // 窗口是在自己的maxTimestamp的时候触发计算的，和endTime无关，比如滑动窗口，每10s，计算最近30s的数据，
                 // 有窗口[-10000, 20000)ms 窗口的maxTimestamp是19999, end 是2000, 当算子的wm是19999的时候就会触发窗口计算
 
-                System.out.println(MessageFormat.format("--apply window: maxTimestamp {0} start {1} end {2}",
-                        maxTimestamp, start, end));
+                // System.out.println(MessageFormat.format("--apply window: maxTimestamp {0} start {1} end {2}",
+                //        maxTimestamp, start, end));
                 // --apply window: maxTimestamp 19,999 start -10,000 end 20,000
 
                 ArrayList<EventBean2> beans = new ArrayList<>();
@@ -229,11 +230,11 @@ public class _20_Window_Api_Demo1 {
                     out.collect(beans.get(i));
                 }
             }
-        }).print();
+        }); //.print();
 
         /**全量聚合API 使用实例:
          * TODO 补充练习 4
-         * 需求 一： 每隔10s，统计最近30s 的数据中，每个页面上发生的行为中，平均时长最大的前2种事件及其平均时长
+         * 需求 一： 每隔10s，统计最近30s 的数据中，每个页面上发生的行为中，不同事件的平均时长最大的前2种事件及其平均时长
          * 用 process算子来实现，可以得到更多信息，比如上下文
          */
         watermarkedBeanStream.keyBy(EventBean2::getPageId)
@@ -253,6 +254,9 @@ public class _20_Window_Api_Demo1 {
                         long maxTimestamp = window.maxTimestamp();
                         long start = window.getStart();
                         long end = window.getEnd();
+
+                        //System.out.println(MessageFormat.format("--process window: taskName {0} currentWM {1} " +
+                        //        "maxTimestamp {2} start {3} end {4}", taskName, currentWatermark, maxTimestamp, start, end));
 
                         // HashMap<事件id, Tuple2<该事件次数, 该事件的所有时长>>
                         HashMap<String, Tuple2<Integer, Long>> map = new HashMap<>();
@@ -292,7 +296,10 @@ public class _20_Window_Api_Demo1 {
 
 
         // 什么时候触发窗口? [0, 10s) [0, 9999]ms 都是窗口要的，窗口在9999也不能触发，是窗口范围的闭区间呀，必须等到10000ms?
-
+        // 每条数据到来了，计算该条数据对应的窗口的起始位置：
+        // 第一个窗口 start = 1970-01-01 00:00:00 - ((当前数据时间 - 1970-01-01 00:00:00) % 窗口长度)
+        // 第一个窗口 end = start + 窗口长度
+        // 第二个窗口 start = 第一个窗口end， 以此类推
         // 滚动聚合，给下游最终只能输出一个值，如果要求top2，还得拼接一起输出;
         // 全量聚合 输出由你自己指定，个数类型不限制
         env.execute();
