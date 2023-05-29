@@ -43,7 +43,6 @@ import java.util.*;
  */
 public class _20_Window_Api_Demo1 {
     public static void main(String[] args) throws Exception {
-        // 多并行度下的watermark 观察
         Configuration configuration = new Configuration();
         configuration.setInteger("rest.port", 8822);
 

@@ -18,7 +18,7 @@ import java.util.*;
  * @author zengwang
  * @create 2023-01-27 15:28
  * @desc: 从kafka的topic-a中读取数据，处理（把读到的数据转大写），处理结果写入kafka的topic-b
- * 利用kafka自身的事务机制，来实现 端到端的eos语义
+ * 利用kafka自身的事务机制，来实现 端到端的eoc语义
  * 核心点：让消费的偏移量记录更新 和 生产端的数据落地，绑定再一个事务中
  */
 public class kafka自身事务机制 {
@@ -97,7 +97,7 @@ public class kafka自身事务机制 {
             }
         }
 
-
+    // TODO 如果偏移量提交成功了，机器挂了，事务提交失败了呢？这个偏移量是提交到哪里呢？__consumer_offsets也有事务标识
 
 
 

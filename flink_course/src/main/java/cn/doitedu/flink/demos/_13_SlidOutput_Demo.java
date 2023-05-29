@@ -35,8 +35,8 @@ public class _13_SlidOutput_Demo {
 
         env.setParallelism(2);
         // 开启Checkpoint
-        env.enableCheckpointing(5000, CheckpointingMode.EXACTLY_ONCE);
-        env.getCheckpointConfig().setCheckpointStorage("file:///Users/zeng.wang/Downloads/ckpt");
+        //env.enableCheckpointing(5000, CheckpointingMode.EXACTLY_ONCE);
+        //env.getCheckpointConfig().setCheckpointStorage("file://D:\\code_ship\\output");
 
         DataStreamSource<EventLog> streamSource = env.addSource(new MySourceFunction());
 
