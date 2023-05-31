@@ -170,7 +170,8 @@ public class _20_Window_Api_Demo1 {
          * 需求 一 ：  每隔10s，统计最近 30s 的数据中，每个用户的行为事件条数
          * 使用sum算子来实现, sum输出也是整条数据，同理于max，首条数据(其他字段 + sum字段被修改)
          * 有意思：bean又被套了一层tuple2，window是如何找到bean的timestamp，从而分配到对应的bucket内？
-         * 自动拆包? 还是从上游来的bean 都是带上一个flag，bean转换的新数据也会继承flag?
+         * 自动拆包? 还是从上游来的bean 都是带上一个flag，bean转换的新数据也会继承flag? 老师在窗口的evictor这里隐隐提到了:
+         * `由时间戳提取器取出来，然后和数据并排 封装为timestampedValue`
          */
         watermarkedBeanStream.map(bean -> Tuple2.of(bean, 1)).returns(new TypeHint<Tuple2<EventBean2, Integer>>() {})
                 .keyBy(tuple2 -> tuple2.f0.getGuid())
