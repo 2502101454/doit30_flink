@@ -23,7 +23,10 @@ public class _02_BatchWordCount {
         FlatMapOperator<String, Tuple2<String, Integer>> wordOne = stringDataSource.flatMap(new RichFlatMapFunction<String, Tuple2<String, Integer>>() {
             @Override
             public void flatMap(String value, Collector<Tuple2<String, Integer>> out) throws Exception {
-                getRuntimeContext().state
+                String[] words = value.split("\\s+");
+                for (String word : words) {
+                    out.collect(Tuple2.of(word, 1));
+                }
             }
         });
         wordOne.groupBy("f0")
