@@ -53,7 +53,8 @@ public class _24_State_KeyedState_Demo {
         // a
         DataStreamSource<String> s1 = env.socketTextStream("localhost", 9999);
         s1.keyBy(string -> string)
-                /*.map(new RichMapFunction<String, String>() {
+                .map(new RichMapFunction<String, String>() {
+                    // 疑问： 每个map算子维护一个ListState，内部自动区分key？还是每个key自身维护一个ListState对象？
                     private ListState<String> listState;
 
                     @Override
@@ -64,8 +65,8 @@ public class _24_State_KeyedState_Demo {
                         // 通过context获取keyedState
                         listState = runtimeContext.getListState(new ListStateDescriptor<String>("string", String.class));
                         // TODO: 使用不同的结构的state
-                        //runtimeContext.getState()
-                        //runtimeContext.getMapState()
+                        // runtimeContext.getState()
+                        // runtimeContext.getMapState()
                     }
 
                     @Override
@@ -78,8 +79,8 @@ public class _24_State_KeyedState_Demo {
                         }
                         return sb.toString();
                     }
-                })*/
-                .map(new WZMapFunction())
+                })
+                //.map(new WZMapFunction()) // keyBy后可以使用算子状态
                 .print();
 
         env.execute();

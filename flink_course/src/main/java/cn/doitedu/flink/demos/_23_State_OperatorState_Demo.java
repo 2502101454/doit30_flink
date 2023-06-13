@@ -111,5 +111,11 @@ class StateMapFunction implements MapFunction<String, String>, CheckpointedFunct
          * (底层快照是按照jobId分目录存储的，新提交的job，jobId就变了，因此重启Job就无法加载先前的State快照了)
          */
 
+        /**
+         * unionListState和普通ListState区别;
+         * unionListStated的快照存储数据，在系统重启后，list数据的重分配模式为：广播模式，在每个subtask上都拥有一份完整的数据
+         * ListState的快照存储数据，在系统重启后，list数据的重构分配模式为：round-robin，轮询平均分配
+         */
+        // ListState<String> unionListState = operatorStateStore.getUnionListState(stateDescriptor);
     }
 }
