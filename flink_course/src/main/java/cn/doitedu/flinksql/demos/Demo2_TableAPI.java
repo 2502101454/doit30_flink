@@ -1,6 +1,9 @@
 package cn.doitedu.flinksql.demos;
 
+import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.*;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
 import static org.apache.flink.table.api.Expressions.$;
 
@@ -11,11 +14,14 @@ import static org.apache.flink.table.api.Expressions.$;
  */
 public class Demo2_TableAPI {
     public static void main(String[] args) {
+        StreamExecutionEnvironment streamEnv = StreamExecutionEnvironment.getExecutionEnvironment();
+        streamEnv.setRuntimeMode(RuntimeExecutionMode.STREAMING);
+        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(streamEnv);
 
-        EnvironmentSettings envSettings = EnvironmentSettings.newInstance()
-                                                            .inStreamingMode()
-                                                            .build();
-        TableEnvironment tableEnv = TableEnvironment.create(envSettings);
+        //EnvironmentSettings envSettings = EnvironmentSettings.newInstance()
+        //                                                    .inStreamingMode()
+        //                                                    .build();
+        //TableEnvironment tableEnv = TableEnvironment.create(envSettings);
 
         Table table = tableEnv.from(TableDescriptor.forConnector("kafka") // 指定连接器
                 .schema(Schema.newBuilder()                 // 指定表结构
