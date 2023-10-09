@@ -103,6 +103,12 @@
             <version>${flink.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.21</version>
+        </dependency>
+
         <!--应用StreamFileSink 功能所需的依赖  begin-->
         <dependency>
             <groupId>org.apache.flink</groupId>

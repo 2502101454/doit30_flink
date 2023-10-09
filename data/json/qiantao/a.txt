@@ -1,0 +1,2 @@
+{"id": 1, "name": "wz", "score": {"math":89, "english": 92}, "info":{"city": "xi'an", "age": 16}, "friends": [{"name": "lihua", "gender": "male"}, {"name": "xiaihong", "gender": "female"}]}
+{"id": 2, "name": "lingling", "score": {"math":98, "english": 96}, "info":{"city": "puyang", "age": 14}, "friends": [{"name": "zengzeng", "gender": "male"}, {"name": "xiaihong", "gender": "female"}]}

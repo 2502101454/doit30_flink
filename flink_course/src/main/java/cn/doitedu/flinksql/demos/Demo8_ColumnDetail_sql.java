@@ -1,31 +1,28 @@
 package cn.doitedu.flinksql.demos;
 
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.catalog.hive.HiveCatalog;
 
 /**
  * @author zengwang
- * @create 2023-09-23 16:35
+ * @create 2023-09-30 15:52
  * @desc:
  */
-public class Demo7_practice {
+public class Demo8_ColumnDetail_sql {
     public static void main(String[] args) {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
-        // 环境创建之处，会地总初始化一个 元数据空间实现对象(defalut_catalog   ==> GenericInMemoryCatalog)
-        StreamTableEnvironment tenv = StreamTableEnvironment.create(env);
+        TableEnvironment tenv = TableEnvironment.create(EnvironmentSettings.inStreamingMode());
 
         tenv.executeSql(
-                "create table t_kafka                                  "
-                        + " (                                                   "
+                "create table t_person                                  "
+                        + " (                                                   " // 物理字段
                         + "   id int,                                           "
                         + "   name map<string, string>,                         "
-                        //+ "   name string,                         "
                         + "   age int,                                          "
-                        + "   gender string                                     "
+                        + "   gender string,                                     "
+                        + "   guid as id,  "  // 表达式字段，as之后是要有物理字段的声明
+                        + "   big_age as age + 10, "
+                        + "   offs bigint metadata from 'offset', " // 元数据字段 from之后是元数据的key名称--字符串
+                        + "   ts TIMESTAMP_LTZ(3) metadata from 'timestamp'   "
                         + " )                                                   "
                         + " WITH (                                              "
                         + "  'connector' = 'kafka',                             "
@@ -38,11 +35,7 @@ public class Demo7_practice {
                         + "  'json.ignore-parse-errors' = 'true'                "
                         + " )                                                   "
         );
-        // {"id": 1, "name": {"formal": 'zs', 'nick': 'tiedan'}, "age": 30, "gender": "female"}
-        //!!!! json里面的字符串是 双引号，没有单引号的操作，不然就会解析出错，上面忽略错误，然后没有输出！！
-        // {"id": 1, "name": {"formal": "zs", "nick": "tiedan"}, "age": 30, "gender": "female"}
-        System.out.println(tenv.listTables()[0].toString());
-        tenv.executeSql("select id, name['formal'], name['nick'], age, gender from t_kafka").print();
-
+        tenv.executeSql("desc t_person").print();
+        tenv.executeSql("select * from t_person").print();
     }
 }
