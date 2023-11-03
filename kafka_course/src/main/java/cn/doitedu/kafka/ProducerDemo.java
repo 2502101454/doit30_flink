@@ -33,7 +33,6 @@ public class ProducerDemo {
 
         // 构造一个生产者客户端
         KafkaProducer<String, String> producer = new KafkaProducer<>(props);
-
         for(int i=0; i<500; i++) {
             // 将业务数据封装成客户端所能发送的格式，生产者代码中，可以根据数据进行判断，发送到不同的topic
             // 0: abc0
@@ -45,7 +44,6 @@ public class ProducerDemo {
             } else {
                 message = new ProducerRecord<>("abcy",i + "", "abc" + i);
             }
-
             // 调用客户端去发送, 数据的发送动作在producer底层是异步的，调用.get()就是阻塞等待
             producer.send(message);
 
