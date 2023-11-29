@@ -32,7 +32,7 @@ public class Demo12_UpsertKafkaConnectorDetail {
         StreamTableEnvironment tenv = StreamTableEnvironment.create(env, settings);
 
         // 1,male
-        DataStreamSource<String> s1 = env.socketTextStream("localhost", 9999);
+        DataStreamSource<String> s1 = env.socketTextStream("hadoop102", 9999);
 
         SingleOutputStreamOperator<Bean1> bean1 = s1.map(s -> {
             String[] arr = s.split(",");

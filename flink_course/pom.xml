@@ -185,6 +185,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!--flink sql mysql cdc connector -->
+        <dependency>
+            <groupId>com.ververica</groupId>
+            <artifactId>flink-sql-connector-mysql-cdc</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
