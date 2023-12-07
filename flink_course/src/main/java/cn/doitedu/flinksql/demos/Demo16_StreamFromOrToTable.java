@@ -26,7 +26,7 @@ public class Demo16_StreamFromOrToTable {
         EnvironmentSettings settings = EnvironmentSettings.inStreamingMode();
         StreamTableEnvironment tenv = StreamTableEnvironment.create(env, settings);
 
-        DataStreamSource<String> s1 = env.socketTextStream("hadoop103", 9999);
+        DataStreamSource<String> s1 = env.socketTextStream("hadoop102", 9999);
 
         SingleOutputStreamOperator<Person> s2 = s1.map(s -> {
             String[] arr = s.split(",");
@@ -51,8 +51,9 @@ public class Demo16_StreamFromOrToTable {
                     + ") as t \n"
                 + "where t.rn <=3 \n";
         // topN SQL 支持RetractStream
-        // tenv.executeSql(sql1).print();
-
+         tenv.executeSql(sql1).print();
+         env.execute();
+         System.exit(0);
         // Table table = tenv.sqlQuery(sql1);
         // tenv.createTemporaryView("topN", table);
 
